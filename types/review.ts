@@ -10,3 +10,13 @@ export type DeepAnalysis = {
   sentimentInsight: string;
   adviceForBuyer: string[];
 };
+
+export type AnalysisResponse = DeepAnalysis &
+  (
+    | { source: 'ai'; provider: 'ollama' }
+    | {
+        source: 'local';
+        fallbackReason:
+          'not_configured' | 'rate_limited' | 'provider_error' | 'invalid_response' | 'timeout';
+      }
+  );

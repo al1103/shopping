@@ -23,9 +23,17 @@ This implementation uses a deterministic, realistic Vietnamese mock catalog, **n
 
 The mock catalog includes a cheap, defective TikTok product; a higher-priced Shopee Mall product with 3,000 reviews and logistics-only complaints; and a four-review Lazada listing excluded by the default minimum of 20 reviews.
 
-## Optional AI analysis
+## Ollama Cloud analysis
 
-Copy `.env.example` to `.env.local` and set `OPENAI_API_KEY` to enable structured GPT-4o-mini analysis through the AI SDK. Without the key, or if the provider fails, the endpoint returns explicitly labeled local analysis. No key is needed to use the dashboard. Review samples are sent to OpenAI only when the key is configured and a user requests deep analysis. Do not send sensitive review data. The live provider path requires your key and is not verified by the keyless demo.
+Create an API key at https://ollama.com/settings/keys and store it as **server-only** `OLLAMA_API_KEY` in the project environment or `.env.local`. Never paste it into chat, commit it, or prefix it with `NEXT_PUBLIC_`. Copy `.env.example` for configuration. `OLLAMA_MODEL` defaults to `gpt-oss:120b`; choose an available cloud model from https://ollama.com/api/tags. Restart the app after changing environment variables.
+
+The server calls `https://ollama.com/api/chat` with Bearer authentication, no streaming, and a 30-second timeout. Ollama Cloud [does not currently support structured outputs](https://docs.ollama.com/capabilities/structured-outputs), so the prompt requests JSON and the response is independently validated with Zod. Malformed JSON, missing fields, provider errors, and timeouts fall back to clearly labeled **rules-based local analysis, not AI**. No unsupported `format`/JSON-schema flag is sent. Review samples leave the server only when a key is configured and deep analysis is requested; do not send sensitive data.
+
+The modal labels successful calls `Ollama Cloud · AI` and shows the reason whenever a local fallback occurs. Responses include `source: "ai", provider: "ollama"` only after a validated provider response. Missing credentials return `fallbackReason: "not_configured"`.
+
+Transport tests use mocked HTTP responses and **do not prove live model inference**. To verify live inference after configuring the key: open a product's deep-analysis dialog, confirm `Ollama Cloud · AI`, and inspect `/api/analyze` for `source: "ai"` and `provider: "ollama"`. A successful HTTP 200 with `source: "local"` is a fallback, not a successful AI test.
+
+References: [Ollama Cloud API and authentication](https://docs.ollama.com/cloud).
 
 ## Structure
 
@@ -45,7 +53,7 @@ Copy `.env.example` to `.env.local` and set `OPENAI_API_KEY` to enable structure
 
 POST accepts the same fields as JSON. `q` is required; `minReviews` defaults to 20; platform is optional and must be `Shopee`, `Lazada`, or `TikTok Shop`. Returns `{ bestPick, items, meta: { totalScanned, executionTimeMs, platformDistribution } }`. Items are descending by `finalScore`; empty results use `bestPick: null`. Platform counts are taken before the minimum-review filter. The client price slider filters ranked results without recalculating their scores.
 
-`POST /api/analyze` accepts `{ product: { title, price, ratingBreakdown, negativeSampleReviews, finalScore? } }`. Returns `{ buyingVerdict, sentimentInsight, adviceForBuyer, source }`, where `source` is `local` or `ai`. Invalid inputs return 400.
+`POST /api/analyze` accepts `{ product: { title, price, ratingBreakdown, negativeSampleReviews, finalScore? } }`. Returns `{ buyingVerdict, sentimentInsight, adviceForBuyer, source }`, where `source` is `local` or `ai`. AI responses include `provider: "ollama"`; local responses include `fallbackReason`. Invalid inputs return 400.
 
 ## Scoring
 
@@ -61,4 +69,4 @@ Vietnamese review matching is deterministic and limited: it is not a general-pur
 
 ### AI deployment guardrails
 
-AI generation has a 15-second timeout, no retries, a 700-token output cap, and a maximum of 10 provider requests per rolling minute **per server instance**; excess calls fall back to local analysis. This in-memory guard resets on restart and is not a distributed quota. Before exposing the key-enabled endpoint publicly, enforce authentication or shared gateway rate limits and configure a provider/project spending budget. Keep the key server-side; never prefix it with `NEXT_PUBLIC_`.
+AI generation has a 30-second timeout, no retries, a 900-token generation cap, and a maximum of 10 provider requests per rolling minute **per server instance**; excess calls fall back to local analysis. This in-memory guard resets on restart and is not a distributed quota. Before exposing the key-enabled endpoint publicly, enforce authentication or shared gateway rate limits and configure a provider/project spending budget. Keep the key server-side; never prefix it with `NEXT_PUBLIC_`.

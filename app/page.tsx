@@ -560,8 +560,8 @@ export default function Home() {
           </p>
           <p className="text-xs">
             Đây là bản demo sử dụng dữ liệu mẫu, không phải trình thu thập dữ liệu trực tiếp. “Tới
-            nơi bán” mở trang tìm kiếm chính thức của sàn. Nếu cấu hình OPENAI_API_KEY, phân tích
-            sâu có thể dùng GPT-4o-mini; nếu không, hệ thống dùng phân tích cục bộ và ghi rõ nguồn.
+            nơi bán” mở trang tìm kiếm chính thức của sàn. Nếu cấu hình OLLAMA_API_KEY, phân tích
+            sâu có thể dùng Ollama Cloud; nếu không, hệ thống dùng phân tích cục bộ và ghi rõ nguồn.
           </p>
         </div>
       </Dialog>
