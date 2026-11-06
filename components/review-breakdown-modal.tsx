@@ -11,11 +11,18 @@ import {
   TriangleAlert,
 } from 'lucide-react';
 import type { AnalyzedProduct } from '@/types/product';
-import type { DeepAnalysis } from '@/types/review';
+import type { AnalysisResponse } from '@/types/review';
 import { Dialog, Button, Badge } from '@/components/ui/primitives';
 import { cn } from '@/lib/utils';
 import { ReviewBreakdown } from '@/components/comparison-table';
-type Analysis = DeepAnalysis & { source: 'local' | 'ai' };
+type Analysis = AnalysisResponse;
+const fallbackLabels = {
+  not_configured: 'Chưa cấu hình Ollama API key.',
+  rate_limited: 'Đã đạt giới hạn gọi AI. Vui lòng thử lại sau.',
+  provider_error: 'Không kết nối được Ollama hoặc model chưa khả dụng.',
+  invalid_response: 'Ollama trả về dữ liệu không hợp lệ.',
+  timeout: 'Ollama chưa phản hồi trong 30 giây.',
+};
 export function ReviewBreakdownModal({
   product,
   onClose,
@@ -69,10 +76,18 @@ export function ReviewBreakdownModal({
           <div className="flex items-center justify-between">
             <Badge className="bg-emerald-400/10 text-emerald-300">
               <Sparkles size={12} />
-              {mutation.data.source === 'ai' ? 'AI Analysis' : 'Phân tích cục bộ · Không dùng AI'}
+              {mutation.data.source === 'ai'
+                ? 'Ollama Cloud · AI'
+                : 'Phân tích cục bộ · Không dùng AI'}
             </Badge>
             <span className="text-[10px] text-zinc-500">Dữ liệu mẫu minh họa</span>
           </div>
+          {mutation.data.source === 'local' && (
+            <p role="status" className="mt-3 text-xs text-amber-300">
+              {fallbackLabels[mutation.data.fallbackReason]} Đang hiển thị phân tích bằng quy tắc,
+              không phải AI.
+            </p>
+          )}
           <h3
             className={cn(
               'mt-5 flex items-center gap-2 text-lg font-semibold',

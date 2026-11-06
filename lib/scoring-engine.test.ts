@@ -255,8 +255,8 @@ describe('scoring engine', () => {
     const emptySearch = await searchGet(new Request('http://localhost/api/search?q='));
     expect(emptySearch.status).toBe(400);
 
-    const originalKey = process.env.OPENAI_API_KEY;
-    delete process.env.OPENAI_API_KEY;
+    const originalKey = process.env.OLLAMA_API_KEY;
+    delete process.env.OLLAMA_API_KEY;
     try {
       const response = await analyzePost(
         new Request('http://localhost/api/analyze', {
@@ -279,14 +279,14 @@ describe('scoring engine', () => {
       expect(result.sentimentInsight).toContain('vận chuyển');
       expect(result.adviceForBuyer.length).toBeGreaterThan(0);
     } finally {
-      if (originalKey === undefined) delete process.env.OPENAI_API_KEY;
-      else process.env.OPENAI_API_KEY = originalKey;
+      if (originalKey === undefined) delete process.env.OLLAMA_API_KEY;
+      else process.env.OLLAMA_API_KEY = originalKey;
     }
   });
 
   it('scales local deep-analysis verdicts to review ratios and flags low sample counts', async () => {
-    const originalKey = process.env.OPENAI_API_KEY;
-    delete process.env.OPENAI_API_KEY;
+    const originalKey = process.env.OLLAMA_API_KEY;
+    delete process.env.OLLAMA_API_KEY;
     const analyze = (product: Record<string, unknown>) =>
       analyzePost(
         new Request('http://localhost/api/analyze', {
@@ -330,8 +330,8 @@ describe('scoring engine', () => {
       });
       expect((await highCriticalResponse.json()).buyingVerdict).toBe('Né gấp');
     } finally {
-      if (originalKey === undefined) delete process.env.OPENAI_API_KEY;
-      else process.env.OPENAI_API_KEY = originalKey;
+      if (originalKey === undefined) delete process.env.OLLAMA_API_KEY;
+      else process.env.OLLAMA_API_KEY = originalKey;
     }
   });
 });
